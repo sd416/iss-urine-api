@@ -1,0 +1,12 @@
+name = "iss-urine-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[durable_objects]
+bindings = [
+  { name = "URINE_TRACKER", class_name = "UrineTracker" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["UrineTracker"]
