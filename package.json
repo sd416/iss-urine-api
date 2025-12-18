@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,5 +16,8 @@
     "express": "^5.2.1",
     "lightstreamer-client-node": "^9.2.2",
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.15"
   }
 }
