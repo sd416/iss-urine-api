@@ -1,3 +1,13 @@
+// Configuration constants
+const LIGHTSTREAMER_URL = "wss://push.lightstreamer.com/lightstreamer";
+const LIGHTSTREAMER_ADAPTER = "ISSLIVE";
+const LIGHTSTREAMER_CLIENT_ID = "mgQkwtwdysogQz2BJ4Ji%20kOj2Bg";
+const TELEMETRY_ITEM = "NODE3000005"; // Urine Tank %
+const TELEMETRY_FIELD = "Value";
+const SUBSCRIPTION_ID = "1";
+const REQUEST_ID = "1";
+const KEEPALIVE_INTERVAL_MS = 30000; // 30 seconds
+
 // Durable Object to maintain persistent WebSocket connection to Lightstreamer
 export class UrineTracker {
   constructor(state, env) {
@@ -51,18 +61,15 @@ export class UrineTracker {
   }
 
   async initializeWebSocket() {
-    // Lightstreamer WebSocket endpoint
-    const wsUrl = "wss://push.lightstreamer.com/lightstreamer";
-    
     try {
       // Create WebSocket connection
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(LIGHTSTREAMER_URL);
       
       this.ws.addEventListener("open", () => {
         console.log("WebSocket connected to Lightstreamer");
         
         // Send create_session request
-        const createSession = `create_session\r\nLS_adapter_set=ISSLIVE&LS_cid=mgQkwtwdysogQz2BJ4Ji%20kOj2Bg&LS_send_sync=false&LS_cause=api\r\n`;
+        const createSession = `create_session\r\nLS_adapter_set=${LIGHTSTREAMER_ADAPTER}&LS_cid=${LIGHTSTREAMER_CLIENT_ID}&LS_send_sync=false&LS_cause=api\r\n`;
         this.ws.send(createSession);
       });
 
@@ -79,11 +86,11 @@ export class UrineTracker {
             console.log("Session ID:", this.sessionId);
             
             // Subscribe to urine tank telemetry
-            const subscribe = `control\r\nLS_reqId=1&LS_op=add&LS_subId=1&LS_mode=MERGE&LS_group=NODE3000005&LS_schema=Value&LS_session=${this.sessionId}\r\n`;
+            const subscribe = `control\r\nLS_reqId=${REQUEST_ID}&LS_op=add&LS_subId=${SUBSCRIPTION_ID}&LS_mode=MERGE&LS_group=${TELEMETRY_ITEM}&LS_schema=${TELEMETRY_FIELD}&LS_session=${this.sessionId}\r\n`;
             this.ws.send(subscribe);
           }
-        } else if (data.includes("U,1,")) {
-          // Update message for subscription 1
+        } else if (data.includes(`U,${SUBSCRIPTION_ID},`)) {
+          // Update message for our subscription
           const parts = data.split(",");
           if (parts.length >= 3) {
             // Extract the value (skip empty values indicated by $)
@@ -112,14 +119,14 @@ export class UrineTracker {
     }
   }
 
-  // Optional: Handle Durable Object alarm for keepalive
+  // Handle Durable Object alarm for keepalive
   async alarm() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      // Send keepalive
+      // Send keepalive ping to maintain WebSocket connection
       this.ws.send("\r\n");
     }
     // Schedule next alarm
-    await this.state.storage.setAlarm(Date.now() + 30000); // 30 seconds
+    await this.state.storage.setAlarm(Date.now() + KEEPALIVE_INTERVAL_MS);
   }
 }
 
